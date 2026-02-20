@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- PWA Configuration -->
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PinPoint">
+  
+  <title>PinPoint - Never Lose Sight</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      position: fixed;
+      overscroll-behavior: none;
+    }
+    
+    #root {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ========== Main Layout ========== */
+    .app-container {
+      padding-top: env(safe-area-inset-top, 20px);
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+      height: 100vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .screen {
+      min-height: calc(100vh - env(safe-area-inset-top, 20px) - env(safe-area-inset-bottom, 20px));
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ========== Header ========== */
+    .page-header {
+      padding: 24px 20px 16px;
+    }
+
+    .page-header h1 {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .page-header p {
+      font-size: 17px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      gap: 12px;
+    }
+
+    .back-button {
+      background: none;
+      border: none;
+      color: #0A84FF;
+      padding: 8px;
+      margin-left: -8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .settings-header h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* ========== Device Card ========== */
+    .device-card {
+      margin: 0 16px 24px;
+      background: linear-gradient(135deg, rgba(15, 52, 96, 0.5), rgba(26, 35, 126, 0.4));
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .device-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .device-info {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .device-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #0A84FF, #0055D4);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
+    }
+
+    .device-details h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #34C759;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #34C759;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .battery-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* ========== Signal Display ========== */
+    .signal-display {
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .signal-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .signal-bars {
+      display: flex;
+      gap: 3px;
+      align-items: flex-end;
+    }
+
+    .signal-bar {
+      width: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .signal-bar.active {
+      background: var(--signal-color, #34C759);
+    }
+
+    .signal-info {
+      flex: 1;
+    }
+
+    .signal-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 2px;
+    }
+
+    .signal-value {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--signal-color, #34C759);
+    }
+
+    .signal-rssi {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      white-space: nowrap;
+    }
+
+    /* ========== Radar Display (Finding Mode) ========== */
+    .radar-display {
+      text-align: center;
+      padding: 20px 0;
+      margin-bottom: 20px;
+    }
+
+    .radar-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-circle {
+      display: none;
+    }
+
+    .radar-center {
+      display: none;
+    }
+
+    .radar-sweep {
+      display: none;
+    }
+
+    .direction-pointer {
+      position: relative;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .pointer-arrow {
+      width: 0;
+      height: 0;
+      border-left: 60px solid transparent;
+      border-right: 60px solid transparent;
+      border-bottom: 140px solid var(--pointer-color, #0A84FF);
+      filter: drop-shadow(0 0 30px var(--pointer-glow, rgba(10, 132, 255, 0.8)));
+      animation: pointerPulse 1.5s ease-in-out infinite;
+      position: relative;
+    }
+
+    .pointer-arrow::after {
+      content: '';
+      position: absolute;
+      bottom: -140px;
+      left: -35px;
+      width: 70px;
+      height: 100px;
+      background: linear-gradient(180deg, var(--pointer-color, #0A84FF) 0%, transparent 100%);
+      border-radius: 35px 35px 0 0;
+    }
+
+    @keyframes pointerPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: 0.95;
+      }
+    }
+
+    .distance-rings {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .distance-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 3px solid var(--ring-color, rgba(10, 132, 255, 0.3));
+      border-radius: 50%;
+      animation: ringPulse 2s ease-out infinite;
+    }
+
+    @keyframes ringPulse {
+      0% {
+        width: 60px;
+        height: 60px;
+        opacity: 0;
+      }
+      50% {
+        opacity: 0.6;
+      }
+      100% {
+        width: 320px;
+        height: 320px;
+        opacity: 0;
+      }
+    }
+
+    .proximity-indicator {
+      position: absolute;
+      bottom: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--pointer-color, #0A84FF);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      animation: fadeInOut 1.5s ease-in-out infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    .pulse-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid rgba(10, 132, 255, 0.6);
+      border-radius: 50%;
+      animation: pulse-expand 1.5s ease-out infinite;
+    }
+
+    @keyframes pulse-expand {
+      0% {
+        width: 12px;
+        height: 12px;
+        opacity: 1;
+      }
+      100% {
+        width: 200px;
+        height: 200px;
+        opacity: 0;
+      }
+    }
+
+    .radar-text h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .radar-text p {
+      font-size: 16px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .distance-display {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 20px;
+      background: rgba(10, 132, 255, 0.2);
+      border: 2px solid rgba(10, 132, 255, 0.4);
+      border-radius: 20px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #0A84FF;
+    }
+
+    /* ========== Action Button ========== */
+    .action-button {
+      width: 100%;
+      height: 56px;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s ease;
+      font-family: inherit;
+    }
+
+    .action-button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0A84FF, #0055D4);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #34C759, #248A3D);
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
+    }
+
+    /* ========== Menu List ========== */
+    .menu-section {
+      margin: 0 16px 24px;
+    }
+
+    .section-title {
+      padding: 16px 8px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .menu-item {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.2s ease;
+    }
+
+    .menu-item:active {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .menu-item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .menu-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0A84FF;
+      flex-shrink: 0;
+    }
+
+    .menu-text h4 {
+      font-size: 16px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .menu-text p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .menu-chevron {
+      color: rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+
+    /* ========== Branding ========== */
+    .branding {
+      text-align: center;
+      padding: 32px 20px;
+    }
+
+    .brand-icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #0A84FF, #0055D4);
+      border-radius: 18px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(10, 132, 255, 0.3);
+    }
+
+    .branding h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .branding p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.5px;
+    }
+
+    .version {
+      text-align: center;
+      padding: 16px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ========== Utility Classes ========== */
+    .hidden {
+      display: none !important;
+    }
+
+    .icon-sm {
+      width: 18px;
+      height: 18px;
+    }
+
+    .icon-md {
+      width: 20px;
+      height: 20px;
+    }
+
+    .icon-lg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* ========== Splash Screen ========== */
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      animation: fadeOut 0.5s ease 2s forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    .splash-icon {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #0A84FF 0%, #0055D4 100%);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+      animation: scaleIn 0.6s ease;
+      box-shadow: 0 8px 32px rgba(10, 132, 255, 0.4);
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .splash-title {
+      font-size: 48px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -1.5px;
+      margin-bottom: 8px;
+      animation: fadeInUp 0.6s ease 0.2s both;
+    }
+
+    .splash-tagline {
+      font-size: 18px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: fadeInUp 0.6s ease 0.4s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script>
+    // ========== State Management ==========
+    const state = {
+      screen: 'home',
+      battery: 78,
+      rssi: -45,
+      isFinding: false
+    };
+
+    let rssiInterval = null;
+    let audioContext = null;
+
+    // ========== Utility Functions ==========
+    function haptic(type = 'medium') {
+      if (!navigator.vibrate) return;
+      const patterns = {
+        light: 10,
+        medium: 20,
+        heavy: 30,
+        success: [10, 50, 10]
+      };
+      navigator.vibrate(patterns[type] || 20);
+    }
+
+    function playTone(frequency = 880, duration = 200) {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        
+        osc.frequency.value = frequency;
+        osc.type = 'sine';
+        
+        gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+        
+        osc.start(audioContext.currentTime);
+        osc.stop(audioContext.currentTime + duration / 1000);
+      } catch (e) {
+        console.log('Audio unavailable');
+      }
+    }
+
+    function getSignalStrength(rssi) {
+      if (rssi > -50) return { text: 'Very Close', color: '#34C759', bars: 4 };
+      if (rssi > -60) return { text: 'Close', color: '#30D158', bars: 3 };
+      if (rssi > -70) return { text: 'Medium', color: '#FF9500', bars: 2 };
+      return { text: 'Far', color: '#FF3B30', bars: 1 };
+    }
+
+    const directions = ['Ahead', 'Ahead-Right', 'Right', 'Behind-Right', 'Behind', 'Behind-Left', 'Left', 'Ahead-Left'];
+    let directionIndex = 0;
+
+    function getDistance(rssi) {
+      if (rssi > -50) return '5 feet';
+      if (rssi > -60) return '15 feet';
+      if (rssi > -70) return '30 feet';
+      if (rssi > -75) return '45 feet';
+      return '60+ feet';
+    }
+
+    function getDirection() {
+      return directions[directionIndex % directions.length];
+    }
+
+    function getDirectionAngle(direction) {
+      const angles = {
+        'Ahead': 0,
+        'Ahead-Right': 45,
+        'Right': 90,
+        'Behind-Right': 135,
+        'Behind': 180,
+        'Behind-Left': 225,
+        'Left': 270,
+        'Ahead-Left': 315
+      };
+      return angles[direction] || 0;
+    }
+
+    // ========== Navigation ==========
+    function navigateTo(screen) {
+      state.screen = screen;
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screen + '-screen').classList.add('active');
+    }
+
+    // ========== Find Mode ==========
+    function startFinding() {
+      console.log('Starting find mode, current state:', state.isFinding);
+      
+      // Prevent starting if already finding
+      if (state.isFinding) {
+        console.log('Already finding, ignoring');
+        return;
+      }
+      
+      state.isFinding = true;
+      directionIndex = 0;
+      haptic('heavy');
+      playTone(880, 100);
+      setTimeout(() => playTone(1320, 150), 100);
+      
+      // Hide signal, show radar
+      const signalEl = document.getElementById('signal-display');
+      const radarEl = document.getElementById('radar-display');
+      if (signalEl) signalEl.classList.add('hidden');
+      if (radarEl) radarEl.classList.remove('hidden');
+      
+      // Update button
+      const btn = document.getElementById('find-btn');
+      if (btn) {
+        btn.className = 'action-button btn-success';
+        btn.innerHTML = `
+          <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+          </svg>
+          <span>Tap to Stop</span>
+        `;
+      }
+
+      updateDistance();
+      
+      // Clear any existing intervals first
+      if (rssiInterval) {
+        clearInterval(rssiInterval);
+      }
+      
+      rssiInterval = setInterval(() => {
+        state.rssi = Math.max(-80, Math.min(-30, state.rssi + (Math.random() - 0.5) * 10));
+        directionIndex++;
+        updateDistance();
+      }, 1500);
+
+      // Clear any existing timeout first
+      if (state.findTimeout) {
+        clearTimeout(state.findTimeout);
+      }
+      
+      // Auto stop after 30 seconds
+      state.findTimeout = setTimeout(() => {
+        console.log('Auto-stopping after 30 seconds');
+        stopFinding();
+      }, 30000);
+      
+      console.log('Find mode started successfully');
+    }
+
+    let lastDistance = 999; // Track previous distance for warmer/colder
+    
+    function updateDistance() {
+      const currentDirection = getDirection();
+      const angle = getDirectionAngle(currentDirection);
+      const currentDist = getDistanceValue(state.rssi);
+      
+      // Update distance display text
+      const distanceEl = document.getElementById('distance-display');
+      if (distanceEl) {
+        distanceEl.textContent = `${getDistance(state.rssi)} · ${currentDirection}`;
+      }
+      
+      // Rotate pointer to direction
+      const pointerEl = document.getElementById('direction-pointer');
+      if (pointerEl) {
+        pointerEl.style.transform = `rotate(${angle}deg)`;
+      }
+      
+      // Get color based on distance
+      const signal = getSignalStrength(state.rssi);
+      const pointerColor = signal.color;
+      
+      // Update CSS variables for color
+      const radarDisplay = document.getElementById('radar-display');
+      if (radarDisplay) {
+        radarDisplay.style.setProperty('--pointer-color', pointerColor);
+        radarDisplay.style.setProperty('--pointer-glow', 
+          pointerColor === '#34C759' ? 'rgba(52, 199, 89, 0.8)' :
+          pointerColor === '#30D158' ? 'rgba(48, 209, 88, 0.8)' :
+          pointerColor === '#FF9500' ? 'rgba(255, 149, 0, 0.8)' :
+          'rgba(255, 59, 48, 0.8)'
+        );
+        radarDisplay.style.setProperty('--ring-color', 
+          pointerColor === '#34C759' ? 'rgba(52, 199, 89, 0.4)' :
+          pointerColor === '#30D158' ? 'rgba(48, 209, 88, 0.4)' :
+          pointerColor === '#FF9500' ? 'rgba(255, 149, 0, 0.4)' :
+          'rgba(255, 59, 48, 0.4)'
+        );
+      }
+      
+      // Update proximity text (warmer/colder)
+      const proximityEl = document.getElementById('proximity-text');
+      if (proximityEl) {
+        if (currentDist < lastDistance - 5) {
+          proximityEl.textContent = 'Getting Warmer';
+        } else if (currentDist > lastDistance + 5) {
+          proximityEl.textContent = 'Getting Colder';
+        } else if (currentDist < 10) {
+          proximityEl.textContent = 'Very Close!';
+        } else {
+          proximityEl.textContent = 'Keep Moving';
+        }
+      }
+      
+      lastDistance = currentDist;
+    }
+    
+    function getDistanceValue(rssi) {
+      // Return numeric distance for comparison
+      if (rssi > -50) return 5;
+      if (rssi > -60) return 15;
+      if (rssi > -70) return 30;
+      if (rssi > -75) return 45;
+      return 60;
+    }
+
+    function stopFinding() {
+      console.log('Stopping find mode, current state:', state.isFinding);
+      
+      // Prevent stopping if not finding
+      if (!state.isFinding) {
+        console.log('Not finding, ignoring stop');
+        return;
+      }
+      
+      state.isFinding = false;
+      lastDistance = 999; // Reset for next time
+      haptic('success');
+      
+      // Clear interval
+      if (rssiInterval) {
+        clearInterval(rssiInterval);
+        rssiInterval = null;
+      }
+      
+      // Clear timeout
+      if (state.findTimeout) {
+        clearTimeout(state.findTimeout);
+        state.findTimeout = null;
+      }
+      
+      // Hide radar, show signal
+      const radarEl = document.getElementById('radar-display');
+      const signalEl = document.getElementById('signal-display');
+      if (radarEl) radarEl.classList.add('hidden');
+      if (signalEl) signalEl.classList.remove('hidden');
+      
+      // Update button
+      const btn = document.getElementById('find-btn');
+      if (btn) {
+        btn.className = 'action-button btn-primary';
+        btn.innerHTML = `
+          <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span>Find My Glasses</span>
+        `;
+      }
+      
+      updateSignal();
+      console.log('Find mode stopped successfully');
+    }
+
+    function updateSignal() {
+      const signal = getSignalStrength(state.rssi);
+      const display = document.getElementById('signal-display');
+      
+      display.style.setProperty('--signal-color', signal.color);
+      display.querySelector('.signal-value').textContent = signal.text;
+      display.querySelector('.signal-value').style.color = signal.color;
+      display.querySelector('.signal-rssi').textContent = Math.round(state.rssi) + ' dBm';
+      
+      const bars = display.querySelectorAll('.signal-bar');
+      bars.forEach((bar, i) => {
+        if (i < signal.bars) {
+          bar.classList.add('active');
+          bar.style.background = signal.color;
+        } else {
+          bar.classList.remove('active');
+        }
+      });
+    }
+
+    // ========== Initialize App ==========
+    function init() {
+      const root = document.getElementById('root');
+      root.innerHTML = `
+        <!-- Splash Screen -->
+        <div class="splash-screen" id="splash">
+          <div class="splash-icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <path d="M16 16h32v4H16v-4zm0 28h32v4H16v-4zm6-14h20a4 4 0 014 4v8a4 4 0 01-4 4H22a4 4 0 01-4-4v-8a4 4 0 014-4z" fill="white"/>
+            </svg>
+          </div>
+          <div class="splash-title">PinPoint</div>
+          <div class="splash-tagline">Never Lose Sight</div>
+        </div>
+
+        <!-- App Container -->
+        <div class="app-container">
+          
+          <!-- HOME SCREEN -->
+          <div id="home-screen" class="screen active">
+            <div class="page-header">
+              <h1>My Devices</h1>
+              <p>Connected to PinPoint Tracker</p>
+            </div>
+            
+            <!-- Connection Status Banner -->
+            <div style="margin: 0 16px 16px; padding: 12px 16px; background: rgba(52, 199, 89, 0.15); border: 1px solid rgba(52, 199, 89, 0.3); border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+              <div style="width: 10px; height: 10px; background: #34C759; border-radius: 50%; animation: pulse 2s infinite;"></div>
+              <div style="flex: 1;">
+                <div style="font-size: 15px; font-weight: 600; color: #34C759; margin-bottom: 2px;">Connected</div>
+                <div style="font-size: 13px; color: rgba(255,255,255,0.6);">PinPoint Tracker • E104-BT52</div>
+              </div>
+              <div style="font-size: 13px; color: rgba(255,255,255,0.5);">78%</div>
+            </div>
+
+            <div class="device-card">
+              <!-- Device Header -->
+              <div class="device-top">
+                <div class="device-info">
+                  <div class="device-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                      <path d="M8 8h16v2H8V8zm0 14h16v2H8v-2zm3-7h10a2 2 0 012 2v4a2 2 0 01-2 2H11a2 2 0 01-2-2v-4a2 2 0 012-2z" fill="white"/>
+                    </svg>
+                  </div>
+                  <div class="device-details">
+                    <h3>PinPoint Tracker</h3>
+                    <div class="status-badge">
+                      <span class="status-dot"></span>
+                      <span>Connected</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Signal Display -->
+              <div id="signal-display" class="signal-display" style="--signal-color: #34C759">
+                <div class="signal-row">
+                  <div class="signal-bars">
+                    <div class="signal-bar active" style="height: 8px"></div>
+                    <div class="signal-bar active" style="height: 12px"></div>
+                    <div class="signal-bar active" style="height: 16px"></div>
+                    <div class="signal-bar active" style="height: 20px"></div>
+                  </div>
+                  <div class="signal-info">
+                    <div class="signal-label">Signal Strength</div>
+                    <div class="signal-value">Very Close</div>
+                  </div>
+                  <div class="signal-rssi">-45 dBm</div>
+                </div>
+              </div>
+
+              <!-- Radar Display (Hidden by default) -->
+              <div id="radar-display" class="radar-display hidden">
+                <div class="radar-container">
+                  <!-- Directional Pointer -->
+                  <div class="direction-pointer" id="direction-pointer">
+                    <div class="pointer-arrow"></div>
+                    <div class="proximity-indicator" id="proximity-text">Getting Warmer</div>
+                  </div>
+                  
+                  <!-- Distance Rings -->
+                  <div class="distance-rings">
+                    <div class="distance-ring" style="animation-delay: 0s"></div>
+                    <div class="distance-ring" style="animation-delay: 0.4s"></div>
+                    <div class="distance-ring" style="animation-delay: 0.8s"></div>
+                  </div>
+                </div>
+                <div class="radar-text">
+                  <h2>Finding Glasses...</h2>
+                  <p>Follow the arrow</p>
+                  <div class="distance-display" id="distance-display">15 feet away</div>
+                </div>
+              </div>
+
+              <!-- Find Button -->
+              <button id="find-btn" class="action-button btn-primary">
+                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>Find My Glasses</span>
+              </button>
+            </div>
+
+            <!-- Menu -->
+            <div class="menu-section">
+              <div class="menu-item" id="sound-nav">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <path d="M15.54 8.46a5 5 0 010 7.07"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Sound Settings</h4>
+                    <p>Adjust alert volume and tone</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+
+              <div class="menu-item" id="settings-nav">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M12 1v6m0 6v6m5.2-15.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m15.2 5.2l-4.2-4.2m0-6l-4.2-4.2"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Device Settings</h4>
+                    <p>Manage connection and preferences</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- SOUND SETTINGS SCREEN -->
+          <div id="sound-screen" class="screen">
+            <div class="settings-header">
+              <button class="back-button" id="sound-back-nav">
+                <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </button>
+              <h2>Sound Settings</h2>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Alert Sound</div>
+              
+              <div class="menu-item">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Volume</h4>
+                    <p>85 dB (Maximum)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="menu-item" id="tone-nav">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 18V5l12-2v13"/>
+                      <circle cx="6" cy="18" r="3"/>
+                      <circle cx="18" cy="16" r="3"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Tone Frequency</h4>
+                    <p>880 Hz (Standard Beep)</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+
+              <div class="menu-item" id="pattern-nav">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Alert Pattern</h4>
+                    <p>Continuous beep</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Test</div>
+              
+              <div class="menu-item" id="test-sound-btn">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Test Alert Sound</h4>
+                    <p>Play a 2-second test beep</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding: 20px; margin-top: 20px;">
+              <div style="background: rgba(255, 159, 10, 0.15); border: 1px solid rgba(255, 159, 10, 0.3); border-radius: 12px; padding: 12px 16px;">
+                <div style="display: flex; gap: 12px;">
+                  <svg style="flex-shrink: 0; margin-top: 2px;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <div style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5;">
+                    High volume alerts help locate misplaced glasses but may be startling. Test volume before use in quiet environments.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TONE FREQUENCY SCREEN -->
+          <div id="tone-screen" class="screen">
+            <div class="settings-header">
+              <button class="back-button" id="tone-back-nav">
+                <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </button>
+              <h2>Tone Frequency</h2>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Select Frequency</div>
+              
+              <div class="menu-item" id="freq-440">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>440 Hz</h4>
+                    <p>Low pitch • Concert A</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="menu-item" id="freq-880">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"/>
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>880 Hz (Current)</h4>
+                    <p>Standard beep • Most audible</p>
+                  </div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+
+              <div class="menu-item" id="freq-1320">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>1320 Hz</h4>
+                    <p>High pitch • Attention-grabbing</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="menu-item" id="freq-2000">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>2000 Hz</h4>
+                    <p>Very high pitch • Piercing</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding: 20px; margin-top: 20px;">
+              <div style="background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.3); border-radius: 12px; padding: 12px 16px;">
+                <div style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5;">
+                  880 Hz is recommended as it falls within the most sensitive range of human hearing and is easily distinguishable from ambient noise.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ALERT PATTERN SCREEN -->
+          <div id="pattern-screen" class="screen">
+            <div class="settings-header">
+              <button class="back-button" id="pattern-back-nav">
+                <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </button>
+              <h2>Alert Pattern</h2>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Select Pattern</div>
+              
+              <div class="menu-item" id="pattern-continuous">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2">
+                      <line x1="2" y1="12" x2="22" y2="12"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Continuous (Current)</h4>
+                    <p>Steady beep • Easy to follow</p>
+                  </div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+
+              <div class="menu-item" id="pattern-pulse">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Pulse</h4>
+                    <p>Short beeps • Less intrusive</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="menu-item" id="pattern-rapid">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Rapid Pulse</h4>
+                    <p>Fast beeps • Urgent</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="menu-item" id="pattern-sos">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 8v4m0 4h.01"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>SOS Pattern</h4>
+                    <p>3 short, 3 long, 3 short</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LOCATION TRACKING SCREEN -->
+          <div id="location-screen" class="screen">
+            <div class="settings-header">
+              <button class="back-button" id="location-back-nav">
+                <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </button>
+              <h2>Location Tracking</h2>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Last Seen Location</div>
+              
+              <div style="margin: 0 16px 16px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <div>
+                    <div style="font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 2px;">Home</div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.6);">Last seen 2 minutes ago</div>
+                  </div>
+                </div>
+                <div style="font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.5;">
+                  123 Main Street, Boise, ID 83702
+                </div>
+              </div>
+
+              <div class="menu-item" id="view-map-btn">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>View on Map</h4>
+                    <p>Open in Apple Maps</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Settings</div>
+              
+              <div class="menu-item" id="location-history-btn">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 6v6l4 2"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Location History</h4>
+                    <p>Enabled • 7 days</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+
+              <div class="menu-item" id="separation-alerts-btn">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Separation Alerts</h4>
+                    <p>Notify when out of range</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </div>
+
+            <div style="padding: 20px; margin-top: 20px;">
+              <div style="background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.3); border-radius: 12px; padding: 12px 16px;">
+                <div style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5;">
+                  Location data is stored locally on your device and is only used to help you find your glasses. Your privacy is protected.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SETTINGS SCREEN -->
+          <div id="settings-screen" class="screen">
+            <div class="settings-header">
+              <button class="back-button" id="back-nav">
+                <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </button>
+              <h2>Device Settings</h2>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Device Info</div>
+              
+              <div class="menu-item">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>PinPoint Tracker</h4>
+                    <p>Model E104-BT52 • Firmware 1.0.0</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="menu-item">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="1" y="6" width="18" height="12" rx="2"/>
+                      <line x1="23" y1="13" x2="23" y2="11"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Battery</h4>
+                    <p>${state.battery}% • CR2032 Coin Cell</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="menu-section">
+              <div class="section-title">Preferences</div>
+              
+              <div class="menu-item">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <path d="M15.54 8.46a5 5 0 010 7.07"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Alert Sound</h4>
+                    <p>880 Hz beep • 85 dB</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+
+              <div class="menu-item" id="location-nav">
+                <div class="menu-item-left">
+                  <div class="menu-icon">
+                    <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <div class="menu-text">
+                    <h4>Location Tracking</h4>
+                    <p>Last seen location enabled</p>
+                  </div>
+                </div>
+                <svg class="menu-chevron icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="branding">
+              <div class="brand-icon">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                  <path d="M10 10h20v2.5H10V10zm0 17.5h20V30H10v-2.5zm3.75-8.75h12.5c1.38 0 2.5 1.12 2.5 2.5v5c0 1.38-1.12 2.5-2.5 2.5h-12.5c-1.38 0-2.5-1.12-2.5-2.5v-5c0-1.38 1.12-2.5 2.5-2.5z" fill="white"/>
+                </svg>
+              </div>
+              <h2>PinPoint</h2>
+              <p>NEVER LOSE SIGHT</p>
+            </div>
+
+            <div class="version">
+              Version 1.0.0 (Beta) • Made with precision
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      // Attach event listeners
+      const findBtn = document.getElementById('find-btn');
+      if (findBtn) {
+        findBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Find button clicked, isFinding:', state.isFinding);
+          
+          if (state.isFinding) {
+            console.log('Calling stopFinding');
+            stopFinding();
+          } else {
+            console.log('Calling startFinding');
+            startFinding();
+          }
+        });
+        console.log('Find button event listener attached');
+      }
+      document.getElementById('sound-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('sound');
+      });
+      document.getElementById('settings-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('settings');
+      });
+      document.getElementById('sound-back-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('home');
+      });
+      document.getElementById('back-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('home');
+      });
+      
+      // Tone frequency navigation
+      document.getElementById('tone-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('tone');
+      });
+      document.getElementById('tone-back-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('sound');
+      });
+      
+      // Alert pattern navigation
+      document.getElementById('pattern-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('pattern');
+      });
+      document.getElementById('pattern-back-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('sound');
+      });
+      
+      // Location tracking navigation
+      document.getElementById('location-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('location');
+      });
+      document.getElementById('location-back-nav').addEventListener('click', () => {
+        haptic('light');
+        navigateTo('settings');
+      });
+      
+      // Test sound button
+      document.getElementById('test-sound-btn').addEventListener('click', () => {
+        haptic('medium');
+        playTone(880, 100);
+        setTimeout(() => playTone(1320, 150), 150);
+        setTimeout(() => playTone(880, 200), 350);
+        setTimeout(() => playTone(1320, 300), 600);
+      });
+
+      // Tone frequency selection
+      document.getElementById('freq-440').addEventListener('click', () => {
+        haptic('light');
+        playTone(440, 500);
+      });
+      document.getElementById('freq-880').addEventListener('click', () => {
+        haptic('light');
+        playTone(880, 500);
+      });
+      document.getElementById('freq-1320').addEventListener('click', () => {
+        haptic('light');
+        playTone(1320, 500);
+      });
+      document.getElementById('freq-2000').addEventListener('click', () => {
+        haptic('light');
+        playTone(2000, 500);
+      });
+
+      // Alert pattern selection
+      document.getElementById('pattern-continuous').addEventListener('click', () => {
+        haptic('light');
+        playTone(880, 1000);
+      });
+      document.getElementById('pattern-pulse').addEventListener('click', () => {
+        haptic('light');
+        playTone(880, 100);
+        setTimeout(() => playTone(880, 100), 300);
+        setTimeout(() => playTone(880, 100), 600);
+      });
+      document.getElementById('pattern-rapid').addEventListener('click', () => {
+        haptic('light');
+        playTone(880, 50);
+        setTimeout(() => playTone(880, 50), 100);
+        setTimeout(() => playTone(880, 50), 200);
+        setTimeout(() => playTone(880, 50), 300);
+        setTimeout(() => playTone(880, 50), 400);
+      });
+      document.getElementById('pattern-sos').addEventListener('click', () => {
+        haptic('light');
+        // SOS: 3 short, 3 long, 3 short
+        playTone(880, 100);
+        setTimeout(() => playTone(880, 100), 200);
+        setTimeout(() => playTone(880, 100), 400);
+        setTimeout(() => playTone(880, 300), 700);
+        setTimeout(() => playTone(880, 300), 1100);
+        setTimeout(() => playTone(880, 300), 1500);
+        setTimeout(() => playTone(880, 100), 2000);
+        setTimeout(() => playTone(880, 100), 2200);
+        setTimeout(() => playTone(880, 100), 2400);
+      });
+
+      // Location tracking buttons
+      document.getElementById('view-map-btn').addEventListener('click', () => {
+        haptic('medium');
+        alert('Opening Apple Maps...\n\n123 Main Street\nBoise, ID 83702');
+      });
+      document.getElementById('location-history-btn').addEventListener('click', () => {
+        haptic('light');
+        alert('Location History Settings\n\nCurrent: Enabled • 7 days\n\nYou can adjust how long location history is stored.');
+      });
+      document.getElementById('separation-alerts-btn').addEventListener('click', () => {
+        haptic('light');
+        alert('Separation Alerts\n\nGet notified when your glasses move out of Bluetooth range.\n\nStatus: Coming soon');
+      });
+
+      // Hide splash screen after 2.5 seconds
+      setTimeout(() => {
+        const splash = document.getElementById('splash');
+        if (splash) {
+          setTimeout(() => {
+            splash.style.display = 'none';
+          }, 500);
+        }
+      }, 2500);
+
+      // Initial signal update
+      updateSignal();
+    }
+
+    // Start app when ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
